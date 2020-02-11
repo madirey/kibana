@@ -7,7 +7,8 @@ import { KibanaRequest, RequestHandler } from 'kibana/server';
 import { SearchResponse } from 'elasticsearch';
 import { AlertData, AlertDataWrapper } from '../../../../common/types';
 import { EndpointAppContext } from '../../../types';
-import { AlertDetailsRequestParams } from './types';
+import { SAVED_OBJECT_TYPE_ALERT_STATE } from '../common';
+import { AlertDetailsRequestParams, AlertDetailsUpdateParams } from './types';
 
 export const alertDetailsHandlerWrapper = function(
   endpointAppContext: EndpointAppContext
@@ -38,4 +39,38 @@ export const alertDetailsHandlerWrapper = function(
   };
 
   return alertDetailsHandler;
+};
+
+export const alertDetailsUpdateHandlerWrapper = function(
+  endpointAppContext: EndpointAppContext
+): RequestHandler<AlertDetailsRequestParams, unknown, AlertDetailsUpdateParams> {
+  const alertDetailsUpdateHandler: RequestHandler<
+    AlertDetailsRequestParams,
+    unknown,
+    AlertDetailsUpdateParams
+  > = async (
+    ctx,
+    req: KibanaRequest<AlertDetailsRequestParams, unknown, AlertDetailsUpdateParams>,
+    res
+  ) => {
+    try {
+      const savedObjectsClient = ctx.core.savedObjects.client;
+      // console.log(savedObjectsClient);
+      const alertId = req.params.id;
+      const savedObjectsResponse = await savedObjectsClient.update(
+        SAVED_OBJECT_TYPE_ALERT_STATE,
+        alertId,
+        {
+          active: req.body.active,
+        }
+      );
+      // console.log(savedObjectsResponse);
+      return res.noContent();
+    } catch (err) {
+      // console.log(err);
+      return res.internalError({ body: err });
+    }
+  };
+
+  return alertDetailsUpdateHandler;
 };

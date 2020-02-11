@@ -8,3 +8,9 @@ import { schema } from '@kbn/config-schema';
 export const alertDetailsReqSchema = schema.object({
   id: schema.string(),
 });
+
+export const alertDetailsUpdateSchema = schema.object({
+  state: schema.object({
+    active: schema.maybe(schema.boolean()),
+  }),
+});

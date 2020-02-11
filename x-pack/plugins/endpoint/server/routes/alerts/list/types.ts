@@ -70,3 +70,10 @@ export interface AlertListRequest {
   from?: number;
   body: AlertListRequestBody;
 }
+
+/**
+ * Request body for updating alerts.
+ */
+export interface AlertListUpdateBody {
+  alert_ids: string[];
+}

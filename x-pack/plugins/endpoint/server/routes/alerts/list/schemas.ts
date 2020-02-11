@@ -47,3 +47,15 @@ export const alertListReqSchema = schema.object(
     },
   }
 );
+
+export const alertListUpdateQuerySchema = schema.object({
+  alert_ids: schema.arrayOf(schema.string(), {
+    minSize: 1,
+  }),
+});
+
+export const alertListUpdateBodySchema = schema.object({
+  state: schema.object({
+    active: schema.maybe(schema.boolean()),
+  }),
+});

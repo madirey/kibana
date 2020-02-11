@@ -10,3 +10,10 @@
 export interface AlertDetailsRequestParams {
   id: string;
 }
+
+/**
+ * Request params for updating alert details.
+ */
+export interface AlertDetailsUpdateParams {
+  active: boolean;
+}
