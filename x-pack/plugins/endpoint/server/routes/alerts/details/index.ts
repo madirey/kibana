@@ -5,4 +5,4 @@
  */
 
 export { alertDetailsReqSchema } from './schemas';
-export { alertDetailsHandlerWrapper } from './handlers';
+export { alertDetailsHandlerWrapper, alertDetailsUpdateHandlerWrapper } from './handlers';

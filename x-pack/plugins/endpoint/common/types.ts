@@ -6,7 +6,11 @@
 
 import { SearchResponse } from 'elasticsearch';
 import { TypeOf } from '@kbn/config-schema';
-import { alertingIndexGetQuerySchema } from './schema/alert_index';
+import {
+  alertingIndexGetQuerySchema,
+  alertingIndexPatchQuerySchema,
+  alertingIndexPatchBodySchema,
+} from './schema/alert_index';
 
 /**
  * A deep readonly type that will make all children of a given object readonly recursively
@@ -149,6 +153,13 @@ export interface DllFields {
 }
 
 /**
+ * Describes the state of an alert.
+ */
+export interface AlertState {
+  active: boolean;
+}
+
+/**
  * Describes an Alert Event.
  * Should be in line with ECS schema.
  */
@@ -229,6 +240,7 @@ export type AlertEvent = Immutable<{
   };
   host: HostFields;
   dll?: DllFields[];
+  state: AlertState;
 }>;
 
 interface AlertMetadata {
@@ -405,6 +417,16 @@ export type AlertingIndexGetQueryInput = KbnConfigSchemaInputTypeOf<
 >;
 
 /**
- * Result of the validated query params when handling alert index requests.
+ * Result of the validated query params when handling alert index get requests.
  */
 export type AlertingIndexGetQueryResult = TypeOf<typeof alertingIndexGetQuerySchema>;
+
+/**
+ * Result of the validated query params when handling alert index patch requests.
+ */
+export type AlertingIndexPatchQueryResult = TypeOf<typeof alertingIndexPatchQuerySchema>;
+
+/**
+ * Result of the validated body params when handling alert index patch requests.
+ */
+export type AlertingIndexPatchBodyResult = TypeOf<typeof alertingIndexPatchBodySchema>;

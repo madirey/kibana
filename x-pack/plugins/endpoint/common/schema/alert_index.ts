@@ -108,3 +108,23 @@ export const alertingIndexGetQuerySchema = schema.object(
     },
   }
 );
+
+/**
+ * TODO
+ */
+export const alertingIndexPatchQuerySchema = schema.object({
+  alert_ids: schema.maybe(
+    schema.arrayOf(schema.string(), {
+      minLength: 1,
+    })
+  ),
+});
+
+/**
+ * TODO
+ */
+export const alertingIndexPatchBodySchema = schema.object({
+  state: schema.object({
+    active: schema.maybe(schema.boolean()),
+  }),
+});

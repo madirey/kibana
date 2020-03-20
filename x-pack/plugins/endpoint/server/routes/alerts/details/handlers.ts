@@ -8,6 +8,7 @@ import { KibanaRequest, RequestHandler } from 'kibana/server';
 import { AlertEvent, EndpointAppConstants } from '../../../../common/types';
 import { EndpointAppContext } from '../../../types';
 import { AlertDetailsRequestParams } from '../types';
+import { AlertingIndexPatchBodyResult } from '../../../../common/types';
 import { AlertDetailsPagination } from './lib';
 
 export const alertDetailsHandlerWrapper = function(
@@ -50,4 +51,36 @@ export const alertDetailsHandlerWrapper = function(
   };
 
   return alertDetailsHandler;
+};
+
+export const alertDetailsUpdateHandlerWrapper = function(
+  endpointAppContext: EndpointAppContext
+): RequestHandler<AlertDetailsRequestParams, unknown, AlertingIndexPatchBodyResult> {
+  const alertDetailsUpdateHandler: RequestHandler<
+    AlertDetailsRequestParams,
+    unknown,
+    AlertingIndexPatchBodyResult
+  > = async (
+    ctx,
+    req: KibanaRequest<AlertDetailsRequestParams, unknown, AlertingIndexPatchBodyResult>,
+    res
+  ) => {
+    try {
+      const savedObjectsClient = ctx.core.savedObjects.client;
+      const alertId = req.params.id;
+      const savedObjectsResponse = await savedObjectsClient.update(
+        SAVED_OBJECT_TYPE_ALERT_STATE,
+        alertId,
+        {
+          active: req.body.active,
+        }
+      );
+      return res.noContent();
+    } catch (err) {
+      // console.log(err);
+      return res.internalError({ body: err });
+    }
+  };
+
+  return alertDetailsUpdateHandler;
 };
