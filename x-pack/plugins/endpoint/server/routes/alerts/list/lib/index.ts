@@ -59,6 +59,24 @@ export const getRequestData = async (
     reqData.fromIndex = reqData.pageIndex * reqData.pageSize;
   }
 
+  // See: https://github.com/elastic/elasticsearch-js/issues/662
+  // and https://github.com/elastic/endpoint-app-team/issues/221
+  if (
+    reqData.searchBefore !== undefined &&
+    reqData.searchBefore[0] === '' &&
+    reqData.emptyStringIsUndefined
+  ) {
+    reqData.searchBefore[0] = EndpointAppConstants.MAX_LONG_INT;
+  }
+
+  if (
+    reqData.searchAfter !== undefined &&
+    reqData.searchAfter[0] === '' &&
+    reqData.emptyStringIsUndefined
+  ) {
+    reqData.searchAfter[0] = EndpointAppConstants.MAX_LONG_INT;
+  }
+
   return reqData;
 };
 

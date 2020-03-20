@@ -165,13 +165,16 @@ export default function({ getService }: FtrProviderContext) {
         expect(body.alerts.length).to.eql(0);
       });
 
-      it('should return 400 when using `before` by custom sort parameter', async () => {
+      it('alerts api should return data using `before` by custom sort parameter, descending', async () => {
         await supertest
           .get(
-            `/api/endpoint/alerts?${nextPrevPrefixDateRange}&${nextPrevPrefixPageSize}&${nextPrevPrefixOrder}&sort=process.pid&before=1&before=66008e21-2493-4b15-a937-939ea228064a`
+            `/api/endpoint/alerts?${nextPrevPrefixDateRange}&${nextPrevPrefixPageSize}&${nextPrevPrefixOrder}&sort=process.pid&before=2824&before=dfa9e94e-0b59-4180-a8cf-cd8a2339ba36`
           )
           .set('kbn-xsrf', 'xxx')
-          .expect(400);
+          .expect(200);
+        expect(body.alerts.length).to.eql(10);
+        expect(body.alerts[0].thread?.id).to.eql(undefined);
+        expect(body.alerts[9].thread?.id).to.eql(undefined);
       });
 
       it('should return data using `after` by custom sort parameter', async () => {
