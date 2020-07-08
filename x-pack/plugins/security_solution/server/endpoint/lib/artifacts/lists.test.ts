@@ -180,6 +180,7 @@ describe('buildEventTypeSignal', () => {
   test('it should convert the exception lists response to the proper endpoint format while paging', async () => {
     // The first call returns one exception
     const first = getFoundExceptionListItemSchemaMock();
+    first.data.push(getExceptionListItemSchemaMock());
 
     // The second call returns two exceptions
     const second = getFoundExceptionListItemSchemaMock();
@@ -194,7 +195,7 @@ describe('buildEventTypeSignal', () => {
       .mockReturnValueOnce(second)
       .mockReturnValueOnce(third);
     const resp = await getFullEndpointExceptionList(mockExceptionClient, 'linux', '1.0.0');
-    expect(resp.entries.length).toEqual(3);
+    expect(resp.entries.length).toEqual(4);
   });
 
   test('it should handle no exceptions', async () => {
