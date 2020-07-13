@@ -41,6 +41,15 @@ describe('manifest', () => {
       manifest2.addEntry(artifactWindows);
     });
 
+    test('Can get default manifest', () => {
+      const manifest = Manifest.getDefault(ManifestConstants.SCHEMA_VERSION);
+      expect(manifest.toEndpointFormat()).toStrictEqual({
+        manifest_version: 'default',
+        schema_version: 'v1',
+        artifacts: {},
+      });
+    });
+
     test('Can create manifest with valid schema version', () => {
       const manifest = new Manifest(new Date(), 'v1', ManifestConstants.INITIAL_VERSION);
       expect(manifest).toBeInstanceOf(Manifest);

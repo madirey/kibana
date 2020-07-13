@@ -93,7 +93,7 @@ export class ManifestTask {
     try {
       // get snapshot based on exception-list-agnostic SOs
       // with diffs from last dispatched manifest
-      const snapshot = await manifestManager.getSnapshot();
+      const snapshot = await manifestManager.getSnapshot({ initialize: true });
       if (snapshot && snapshot.diffs.length > 0) {
         // create new artifacts
         errors = await manifestManager.syncArtifacts(snapshot, 'add');
