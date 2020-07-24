@@ -4,16 +4,18 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
+import semver from 'semver';
 import { Logger, SavedObjectsClientContract } from 'src/core/server';
 import LRU from 'lru-cache';
 import { PackageConfigServiceInterface } from '../../../../../../ingest_manager/server';
 import { ExceptionListClient } from '../../../../../../lists/server';
-import { ManifestSchemaVersion } from '../../../../../common/endpoint/schema/common';
-import { manifestDispatchSchema } from '../../../../../common/endpoint/schema/manifest';
+import {
+  ManifestSchemaVersion,
+  manifestDispatchSchema,
+} from '../../../../../common/endpoint/schema/manifest';
 
 import {
   ArtifactConstants,
-  ManifestConstants,
   Manifest,
   buildArtifact,
   getFullEndpointExceptionList,
@@ -43,6 +45,12 @@ export interface ManifestSnapshotOpts {
 export interface ManifestSnapshot {
   manifest: Manifest;
   diffs: ManifestDiff[];
+}
+
+export interface BuildManifestOpts {
+  artifactSchemaVersion?: string;
+  manifestSchemaVersion?: ManifestSchemaVersion;
+  baselineManifest?: Manifest;
 }
 
 export class ManifestManager {
@@ -172,16 +180,22 @@ export class ManifestManager {
    * @returns {Promise<Manifest | null>} The last computed manifest, or null if does not exist.
    * @throws Throws/rejects if there is an unexpected error retrieving the manifest.
    */
-  public async getLastComputedManifest(schemaVersion: string): Promise<Manifest | null> {
+  public async getLastComputedManifest(
+    schemaVersion?: ManifestSchemaVersion
+  ): Promise<Manifest | null> {
     try {
-      const manifestClient = this.getManifestClient(schemaVersion);
+      const manifestClient = this.getManifestClient(schemaVersion ?? 'v1');
       const manifestSo = await manifestClient.getManifest();
 
       if (manifestSo.version === undefined) {
         throw new Error('No version returned for manifest.');
       }
 
-      const manifest = new Manifest(schemaVersion, manifestSo.version);
+      const manifest = new Manifest({
+        schemaVersion,
+        semanticVersion: manifestSo.attributes.semanticVersion,
+        soVersion: manifestSo.version,
+      });
 
       for (const id of manifestSo.attributes.ids) {
         const artifactSo = await this.artifactClient.getArtifact(id);
@@ -203,18 +217,15 @@ export class ManifestManager {
    * @param baselineManifest A baseline manifest to use for initializing pre-existing artifacts.
    * @returns {Promise<Manifest>} A new Manifest object reprenting the current exception list.
    */
-  public async buildNewManifest(
-    schemaVersion: string,
-    baselineManifest?: Manifest
-  ): Promise<Manifest> {
+  public async buildNewManifest(opts?: BuildManifestOpts): Promise<Manifest> {
     // Build new exception list artifacts
-    const artifacts = await this.buildExceptionListArtifacts(ArtifactConstants.SCHEMA_VERSION);
+    const artifacts = await this.buildExceptionListArtifacts(opts?.artifactSchemaVersion ?? 'v1');
 
     // Build new manifest
     const manifest = Manifest.fromArtifacts(
       artifacts,
-      ManifestConstants.SCHEMA_VERSION,
-      baselineManifest ?? Manifest.getDefault(schemaVersion)
+      opts?.baselineManifest ?? Manifest.getDefault(opts?.manifestSchemaVersion),
+      opts?.manifestSchemaVersion
     );
 
     return manifest;
@@ -227,8 +238,8 @@ export class ManifestManager {
    * @param manifest The Manifest to dispatch.
    * @returns {Promise<Error[]>} Any errors encountered.
    */
-  public async tryDispatch(manifest: Manifest): Promise<Error[]> {
-    const serializedManifest = manifest.toEndpointFormat();
+  public async tryDispatch(newManifest: Manifest): Promise<Error[]> {
+    const serializedManifest = newManifest.toEndpointFormat();
     if (!manifestDispatchSchema.is(serializedManifest)) {
       return [new Error('Invalid manifest')];
     }
@@ -247,14 +258,12 @@ export class ManifestManager {
       for (const packageConfig of items) {
         const { id, revision, updated_at, updated_by, ...newPackageConfig } = packageConfig;
         if (newPackageConfig.inputs.length > 0 && newPackageConfig.inputs[0].config !== undefined) {
-          const artifactManifest = newPackageConfig.inputs[0].config.artifact_manifest ?? {
+          const oldManifest = newPackageConfig.inputs[0].config.artifact_manifest ?? {
             value: {},
           };
 
-          const oldManifest =
-            Manifest.fromPkgConfig(artifactManifest.value) ??
-            Manifest.getDefault(ManifestConstants.SCHEMA_VERSION);
-          if (!manifest.equals(oldManifest)) {
+          const newManifestVersion = newManifest.getSemanticVersion();
+          if (semver.gt(newManifestVersion, oldManifest.value.manifest_version)) {
             newPackageConfig.inputs[0].config.artifact_manifest = {
               value: serializedManifest,
             };
@@ -262,7 +271,7 @@ export class ManifestManager {
             try {
               await this.packageConfigService.update(this.savedObjectsClient, id, newPackageConfig);
               this.logger.debug(
-                `Updated package config ${id} with manifest version ${manifest.getSha256()}`
+                `Updated package config ${id} with manifest version ${newManifest.getSemanticVersion()}`
               );
             } catch (err) {
               errors.push(err);
@@ -304,7 +313,7 @@ export class ManifestManager {
         });
       }
 
-      this.logger.info(`Committed manifest ${manifest.getSha256()}`);
+      this.logger.info(`Committed manifest ${manifest.getSemanticVersion()}`);
     } catch (err) {
       return err;
     }

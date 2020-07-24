@@ -4,7 +4,6 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { createHash } from 'crypto';
 import { validate } from '../../../../common/validate';
 import {
   InternalArtifactSchema,
@@ -12,14 +11,17 @@ import {
   internalArtifactCompleteSchema,
   InternalArtifactCompleteSchema,
 } from '../../schemas/artifacts';
+import { SemanticVersion } from '../../../../common/endpoint/schema/common';
 import {
-  manifestSchemaVersion,
+  ManifestSchema,
   ManifestSchemaVersion,
-} from '../../../../common/endpoint/schema/common';
-import { ManifestSchema, manifestSchema } from '../../../../common/endpoint/schema/manifest';
+  manifestSchema,
+  ManifestEntrySchema,
+} from '../../../../common/endpoint/schema/manifest';
 import { ManifestEntry } from './manifest_entry';
 import { maybeCompressArtifact, isCompressed } from './lists';
-import { getArtifactId } from './common';
+import { getArtifactId, bumpSemanticVersion } from './common';
+import { ManifestVersion, manifestVersion } from '../../schemas/artifacts/manifest';
 
 export interface ManifestDiff {
   type: string;
@@ -28,37 +30,47 @@ export interface ManifestDiff {
 
 export class Manifest {
   private entries: Record<string, ManifestEntry>;
-  private schemaVersion: ManifestSchemaVersion;
+  private version: ManifestVersion;
 
-  // For concurrency control
-  private version: string | undefined;
-
-  constructor(schemaVersion: string, version?: string) {
+  constructor(version?: Partial<ManifestVersion>) {
     this.entries = {};
-    this.version = version;
 
-    const [validated, errors] = validate(
-      (schemaVersion as unknown) as object,
-      manifestSchemaVersion
-    );
+    const decodedVersion = {
+      schemaVersion: version?.schemaVersion ?? 'v1',
+      semanticVersion: version?.semanticVersion ?? '1.0.0',
+      soVersion: version?.soVersion,
+    };
 
-    if (errors != null || validated === null) {
-      throw new Error(`Invalid manifest schema version: ${schemaVersion}`);
+    const [validated, errors] = validate(decodedVersion, manifestVersion);
+    if (errors != null || validated == null) {
+      throw new Error(errors ?? 'Invalid version format');
     }
 
-    this.schemaVersion = validated;
+    this.version = validated;
   }
 
-  public static getDefault(schemaVersion: string) {
-    return new Manifest(schemaVersion);
+  public static getDefault(schemaVersion?: ManifestSchemaVersion) {
+    return new Manifest({ schemaVersion, semanticVersion: '1.0.0' });
   }
 
   public static fromArtifacts(
     artifacts: InternalArtifactCompleteSchema[],
-    schemaVersion: string,
-    oldManifest: Manifest
+    oldManifest: Manifest,
+    schemaVersion?: ManifestSchemaVersion
   ): Manifest {
-    const manifest = new Manifest(schemaVersion, oldManifest.getSoVersion());
+    const semVer = oldManifest.getSemanticVersion();
+    if (semVer == null) {
+      throw new Error('Invalid semver.');
+    }
+    const newSemver = bumpSemanticVersion(semVer);
+    if (newSemver == null) {
+      throw new Error('Invalid semver.');
+    }
+    const manifest = new Manifest({
+      schemaVersion,
+      semanticVersion: newSemver,
+      soVersion: oldManifest.getSoVersion(),
+    });
     artifacts.forEach((artifact) => {
       const id = getArtifactId(artifact);
       const existingArtifact = oldManifest.getArtifact(id);
@@ -69,27 +81,6 @@ export class Manifest {
       }
     });
     return manifest;
-  }
-
-  public static fromPkgConfig(manifestPkgConfig: ManifestSchema): Manifest | null {
-    if (manifestSchema.is(manifestPkgConfig)) {
-      const manifest = new Manifest(manifestPkgConfig.schema_version);
-      for (const [identifier, artifactRecord] of Object.entries(manifestPkgConfig.artifacts)) {
-        const artifact = {
-          identifier,
-          compressionAlgorithm: artifactRecord.compression_algorithm,
-          encryptionAlgorithm: artifactRecord.encryption_algorithm,
-          decodedSha256: artifactRecord.decoded_sha256,
-          decodedSize: artifactRecord.decoded_size,
-          encodedSha256: artifactRecord.encoded_sha256,
-          encodedSize: artifactRecord.encoded_size,
-        };
-        manifest.addEntry(artifact);
-      }
-      return manifest;
-    } else {
-      return null;
-    }
   }
 
   public async compressArtifact(id: string): Promise<Error | null> {
@@ -112,30 +103,16 @@ export class Manifest {
     return null;
   }
 
-  public equals(manifest: Manifest): boolean {
-    return this.getSha256() === manifest.getSha256();
-  }
-
-  public getSha256(): string {
-    let sha256 = createHash('sha256');
-    Object.keys(this.entries)
-      .sort()
-      .forEach((docId) => {
-        sha256 = sha256.update(docId);
-      });
-    return sha256.digest('hex');
-  }
-
   public getSchemaVersion(): ManifestSchemaVersion {
-    return this.schemaVersion;
+    return this.version.schemaVersion;
+  }
+
+  public getSemanticVersion(): SemanticVersion {
+    return this.version.semanticVersion;
   }
 
   public getSoVersion(): string | undefined {
-    return this.version;
-  }
-
-  public setSoVersion(version: string) {
-    this.version = version;
+    return this.version.soVersion;
   }
 
   public addEntry(artifact: InternalArtifactSchema) {
@@ -178,10 +155,10 @@ export class Manifest {
   }
 
   public toEndpointFormat(): ManifestSchema {
-    const manifestObj: ManifestSchema = {
-      manifest_version: this.getSha256(),
-      schema_version: this.schemaVersion,
-      artifacts: {},
+    const manifestObj = {
+      manifest_version: this.version.semanticVersion,
+      schema_version: this.version.schemaVersion,
+      artifacts: {} as Record<string, ManifestEntrySchema>,
     };
 
     for (const entry of Object.values(this.entries)) {
@@ -199,6 +176,7 @@ export class Manifest {
   public toSavedObject(): InternalManifestSchema {
     return {
       ids: Object.keys(this.entries),
+      semanticVersion: this.version.semanticVersion,
     };
   }
 }

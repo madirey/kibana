@@ -19,10 +19,9 @@ describe('manifest_manager', () => {
       const oldManifest = await manifestManager.getLastComputedManifest(
         ManifestConstants.SCHEMA_VERSION
       );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       expect(newManifest.diff(oldManifest!)).toEqual([
         {
           id:
@@ -43,10 +42,9 @@ describe('manifest_manager', () => {
       const oldManifest = await manifestManager.getLastComputedManifest(
         ManifestConstants.SCHEMA_VERSION
       );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       const diffs = newManifest.diff(oldManifest!);
       expect(diffs).toEqual([
         {
@@ -107,10 +105,9 @@ describe('manifest_manager', () => {
       const oldManifest = await manifestManager.getLastComputedManifest(
         ManifestConstants.SCHEMA_VERSION
       );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       const dispatchErrors = await manifestManager.tryDispatch(newManifest);
       expect(dispatchErrors.length).toEqual(1);
       expect(dispatchErrors[0].message).toEqual('Invalid manifest');
@@ -119,13 +116,10 @@ describe('manifest_manager', () => {
     test('ManifestManager can dispatch manifest', async () => {
       const packageConfigService = createPackageConfigServiceMock();
       const manifestManager = getManifestManagerMock({ packageConfigService });
-      const oldManifest = await manifestManager.getLastComputedManifest(
-        ManifestConstants.SCHEMA_VERSION
-      );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const oldManifest = await manifestManager.getLastComputedManifest();
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       const diffs = newManifest.diff(oldManifest!);
       const newArtifactId = diffs[1].id;
       await newManifest.compressArtifact(newArtifactId);
@@ -140,7 +134,7 @@ describe('manifest_manager', () => {
       expect(
         packageConfigService.update.mock.calls[0][2].inputs[0].config!.artifact_manifest.value
       ).toEqual({
-        manifest_version: '520f6cf88b3f36a065c6ca81058d5f8690aadadf6fe857f8dec4cc37589e7283',
+        manifest_version: '1.0.1',
         schema_version: 'v1',
         artifacts: {
           'endpoint-exceptionlist-linux-v1': {
@@ -183,10 +177,9 @@ describe('manifest_manager', () => {
       const oldManifest = await manifestManager.getLastComputedManifest(
         ManifestConstants.SCHEMA_VERSION
       );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       const diffs = newManifest.diff(oldManifest!);
       const newArtifactId = diffs[1].id;
       await newManifest.compressArtifact(newArtifactId);
@@ -205,10 +198,9 @@ describe('manifest_manager', () => {
       const oldManifest = await manifestManager.getLastComputedManifest(
         ManifestConstants.SCHEMA_VERSION
       );
-      const newManifest = await manifestManager.buildNewManifest(
-        ManifestConstants.SCHEMA_VERSION,
-        oldManifest!
-      );
+      const newManifest = await manifestManager.buildNewManifest({
+        baselineManifest: oldManifest!,
+      });
       const diffs = newManifest.diff(oldManifest!);
       const oldArtifactId = diffs[0].id;
       const newArtifactId = diffs[1].id;

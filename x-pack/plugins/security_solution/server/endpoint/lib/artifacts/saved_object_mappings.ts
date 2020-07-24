@@ -60,6 +60,10 @@ export const manifestSavedObjectMappings: SavedObjectsType['mappings'] = {
       type: 'keyword',
       index: false,
     },
+    semanticVersion: {
+      type: 'keyword',
+      index: false,
+    },
   },
 };
 

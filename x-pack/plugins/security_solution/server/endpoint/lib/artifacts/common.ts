@@ -3,7 +3,10 @@
  * or more contributor license agreements. Licensed under the Elastic License;
  * you may not use this file except in compliance with the Elastic License.
  */
+import semver from 'semver';
 import { Logger } from 'src/core/server';
+import { SemanticVersion } from '../../../../common/endpoint/schema/common';
+import { ManifestSchemaVersion } from '../../../../common/endpoint/schema/manifest';
 import {
   InternalArtifactSchema,
   InternalArtifactCompleteSchema,
@@ -19,7 +22,11 @@ export const ArtifactConstants = {
 
 export const ManifestConstants = {
   SAVED_OBJECT_TYPE: 'endpoint:user-artifact-manifest',
-  SCHEMA_VERSION: 'v1',
+  SCHEMA_VERSION: 'v1' as ManifestSchemaVersion,
+};
+
+export const bumpSemanticVersion = (semanticVersion: SemanticVersion) => {
+  return semver.inc(semanticVersion, 'patch');
 };
 
 export const getArtifactId = (artifact: InternalArtifactSchema) => {

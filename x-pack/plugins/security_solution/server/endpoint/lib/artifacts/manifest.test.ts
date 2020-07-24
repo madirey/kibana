@@ -4,9 +4,9 @@
  * you may not use this file except in compliance with the Elastic License.
  */
 
-import { ManifestSchemaVersion } from '../../../../common/endpoint/schema/common';
+import { ManifestSchemaVersion } from '../../../../common/endpoint/schema/manifest';
 import { InternalArtifactCompleteSchema } from '../../schemas';
-import { ManifestConstants, getArtifactId } from './common';
+import { getArtifactId } from './common';
 import { Manifest } from './manifest';
 import {
   getMockArtifacts,
@@ -30,13 +30,17 @@ describe('manifest', () => {
     });
 
     test('Can create manifest with valid schema version', () => {
-      const manifest = new Manifest('v1');
+      const manifest = new Manifest({
+        schemaVersion: 'v1',
+      });
       expect(manifest).toBeInstanceOf(Manifest);
     });
 
     test('Cannot create manifest with invalid schema version', () => {
       expect(() => {
-        new Manifest('abcd' as ManifestSchemaVersion);
+        new Manifest({
+          schemaVersion: 'abcd' as ManifestSchemaVersion,
+        });
       }).toThrow();
     });
 
@@ -74,7 +78,7 @@ describe('manifest', () => {
               '/api/endpoint/artifacts/download/endpoint-exceptionlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658',
           },
         },
-        manifest_version: 'a9b7ef358a363f327f479e31efc4f228b2277a7fb4d1914ca9b4e7ca9ffcf537',
+        manifest_version: '1.0.0',
         schema_version: 'v1',
       });
     });
@@ -113,7 +117,7 @@ describe('manifest', () => {
               '/api/endpoint/artifacts/download/endpoint-exceptionlist-windows-v1/96b76a1a911662053a1562ac14c4ff1e87c2ff550d6fe52e1e0b3790526597d3',
           },
         },
-        manifest_version: 'a7f4760bfa2662e85e30fe4fb8c01b4c4a20938c76ab21d3c5a3e781e547cce7',
+        manifest_version: '1.0.0',
         schema_version: 'v1',
       });
     });
@@ -125,6 +129,7 @@ describe('manifest', () => {
           'endpoint-exceptionlist-macos-v1-96b76a1a911662053a1562ac14c4ff1e87c2ff550d6fe52e1e0b3790526597d3',
           'endpoint-exceptionlist-windows-v1-96b76a1a911662053a1562ac14c4ff1e87c2ff550d6fe52e1e0b3790526597d3',
         ],
+        semanticVersion: '1.0.0',
       });
     });
 
@@ -168,8 +173,8 @@ describe('manifest', () => {
     });
 
     test('Manifest can be created from list of artifacts', async () => {
-      const oldManifest = new Manifest(ManifestConstants.SCHEMA_VERSION);
-      const manifest = Manifest.fromArtifacts(artifacts, 'v1', oldManifest);
+      const oldManifest = new Manifest();
+      const manifest = Manifest.fromArtifacts(artifacts, oldManifest);
       expect(
         manifest.contains(
           'endpoint-exceptionlist-linux-v1-96b76a1a911662053a1562ac14c4ff1e87c2ff550d6fe52e1e0b3790526597d3'

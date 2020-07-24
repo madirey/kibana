@@ -5,17 +5,33 @@
  */
 
 import * as t from 'io-ts';
-import {
-  compressionAlgorithm,
-  compressionAlgorithmDispatch,
-  encryptionAlgorithm,
-  identifier,
-  manifestSchemaVersion,
-  manifestVersion,
-  relativeUrl,
-  sha256,
-  size,
-} from './common';
+import { semanticVersion, sha256 } from './common';
+
+export const compressionAlgorithm = t.keyof({
+  none: null,
+  zlib: null,
+});
+export type CompressionAlgorithm = t.TypeOf<typeof compressionAlgorithm>;
+
+export const compressionAlgorithmDispatch = t.keyof({
+  zlib: null,
+});
+export type CompressionAlgorithmDispatch = t.TypeOf<typeof compressionAlgorithmDispatch>;
+
+export const encryptionAlgorithm = t.keyof({
+  none: null,
+});
+
+export const identifier = t.string;
+
+export const manifestSchemaVersion = t.keyof({
+  v1: null,
+});
+export type ManifestSchemaVersion = t.TypeOf<typeof manifestSchemaVersion>;
+
+export const relativeUrl = t.string;
+
+export const size = t.number;
 
 export const manifestEntryBaseSchema = t.exact(
   t.type({
@@ -50,7 +66,7 @@ export type ManifestEntryDispatchSchema = t.TypeOf<typeof manifestEntryDispatchS
 
 export const manifestBaseSchema = t.exact(
   t.type({
-    manifest_version: manifestVersion,
+    manifest_version: semanticVersion,
     schema_version: manifestSchemaVersion,
   })
 );

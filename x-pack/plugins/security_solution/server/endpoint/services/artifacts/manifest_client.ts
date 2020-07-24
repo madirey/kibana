@@ -12,7 +12,7 @@ import {
 import {
   manifestSchemaVersion,
   ManifestSchemaVersion,
-} from '../../../../common/endpoint/schema/common';
+} from '../../../../common/endpoint/schema/manifest';
 import { validate } from '../../../../common/validate';
 import { ManifestConstants } from '../../lib/artifacts';
 import { InternalManifestSchema, InternalManifestCreateSchema } from '../../schemas/artifacts';

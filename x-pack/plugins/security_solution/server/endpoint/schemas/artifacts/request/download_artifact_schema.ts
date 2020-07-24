@@ -5,7 +5,8 @@
  */
 
 import * as t from 'io-ts';
-import { identifier, sha256 } from '../../../../../common/endpoint/schema/common';
+import { sha256 } from '../../../../../common/endpoint/schema/common';
+import { identifier } from '../../../../../common/endpoint/schema/manifest';
 
 export const downloadArtifactRequestParamsSchema = t.exact(
   t.type({

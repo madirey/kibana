@@ -5,7 +5,7 @@
  */
 
 import { savedObjectsClientMock } from 'src/core/server/mocks';
-import { ManifestSchemaVersion } from '../../../../common/endpoint/schema/common';
+import { ManifestSchemaVersion } from '../../../../common/endpoint/schema/manifest';
 import { ManifestConstants } from '../../lib/artifacts';
 import { getInternalManifestMock } from '../../schemas/artifacts/saved_objects.mock';
 import { getManifestClientMock } from './manifest_client.mock';

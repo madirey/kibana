@@ -5,13 +5,13 @@
  */
 
 import * as t from 'io-ts';
+import { semanticVersion, sha256 } from '../../../../common/endpoint/schema/common';
 import {
   compressionAlgorithm,
   encryptionAlgorithm,
   identifier,
-  sha256,
   size,
-} from '../../../../common/endpoint/schema/common';
+} from '../../../../common/endpoint/schema/manifest';
 import { created } from './common';
 
 export const body = t.string; // base64
@@ -58,6 +58,7 @@ export type InternalArtifactCreateSchema = t.TypeOf<typeof internalArtifactCreat
 export const internalManifestSchema = t.exact(
   t.type({
     ids: t.array(identifier),
+    semanticVersion,
   })
 );
 export type InternalManifestSchema = t.TypeOf<typeof internalManifestSchema>;

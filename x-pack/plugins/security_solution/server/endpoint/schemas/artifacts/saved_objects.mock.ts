@@ -53,4 +53,5 @@ export const getInternalArtifactMockWithDiffs = async (
 
 export const getInternalManifestMock = (): InternalManifestSchema => ({
   ids: [],
+  semanticVersion: '1.0.0',
 });
