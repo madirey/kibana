@@ -60,6 +60,7 @@ export class ManifestManager {
   protected savedObjectsClient: SavedObjectsClientContract;
   protected logger: Logger;
   protected cache: LRU<string, Buffer>;
+  protected schemaVersion: ManifestSchemaVersion;
 
   constructor(context: ManifestManagerContext) {
     this.artifactClient = context.artifactClient;
@@ -68,39 +69,36 @@ export class ManifestManager {
     this.savedObjectsClient = context.savedObjectsClient;
     this.logger = context.logger;
     this.cache = context.cache;
+    this.schemaVersion = 'v1'; // currently the only version we support
   }
 
   /**
-   * Gets a ManifestClient for the provided schemaVersion.
+   * Gets a ManifestClient.
    *
-   * @param schemaVersion The schema version of the manifest.
-   * @returns {ManifestClient} A ManifestClient scoped to the provided schemaVersion.
+   * @returns {ManifestClient} A ManifestClient scoped to the ManifestManager's schemaVersion.
    */
-  protected getManifestClient(schemaVersion: string): ManifestClient {
-    return new ManifestClient(this.savedObjectsClient, schemaVersion as ManifestSchemaVersion);
+  protected getManifestClient(): ManifestClient {
+    return new ManifestClient(this.savedObjectsClient, this.schemaVersion);
   }
 
   /**
    * Builds an array of artifacts (one per supported OS) based on the current
    * state of exception-list-agnostic SOs.
    *
-   * @param schemaVersion The schema version of the artifact
    * @returns {Promise<InternalArtifactCompleteSchema[]>} An array of uncompressed artifacts built from exception-list-agnostic SOs.
    * @throws Throws/rejects if there are errors building the list.
    */
-  protected async buildExceptionListArtifacts(
-    schemaVersion: string
-  ): Promise<InternalArtifactCompleteSchema[]> {
+  protected async buildExceptionListArtifacts(): Promise<InternalArtifactCompleteSchema[]> {
     return ArtifactConstants.SUPPORTED_OPERATING_SYSTEMS.reduce<
       Promise<InternalArtifactCompleteSchema[]>
     >(async (acc, os) => {
       const exceptionList = await getFullEndpointExceptionList(
         this.exceptionListClient,
         os,
-        schemaVersion
+        this.schemaVersion
       );
       const artifacts = await acc;
-      const artifact = await buildArtifact(exceptionList, os, schemaVersion);
+      const artifact = await buildArtifact(exceptionList, os, this.schemaVersion);
       return Promise.resolve([...artifacts, artifact]);
     }, Promise.resolve([]));
   }
@@ -176,15 +174,12 @@ export class ManifestManager {
    * Returns the last computed manifest based on the state of the
    * user-artifact-manifest SO.
    *
-   * @param schemaVersion The schema version of the manifest.
    * @returns {Promise<Manifest | null>} The last computed manifest, or null if does not exist.
    * @throws Throws/rejects if there is an unexpected error retrieving the manifest.
    */
-  public async getLastComputedManifest(
-    schemaVersion?: ManifestSchemaVersion
-  ): Promise<Manifest | null> {
+  public async getLastComputedManifest(): Promise<Manifest | null> {
     try {
-      const manifestClient = this.getManifestClient(schemaVersion ?? 'v1');
+      const manifestClient = this.getManifestClient();
       const manifestSo = await manifestClient.getManifest();
 
       if (manifestSo.version === undefined) {
@@ -192,7 +187,7 @@ export class ManifestManager {
       }
 
       const manifest = new Manifest({
-        schemaVersion,
+        schemaVersion: this.schemaVersion,
         semanticVersion: manifestSo.attributes.semanticVersion,
         soVersion: manifestSo.version,
       });
@@ -213,13 +208,12 @@ export class ManifestManager {
   /**
    * Builds a new manifest based on the current user exception list.
    *
-   * @param schemaVersion The schema version of the manifest.
    * @param baselineManifest A baseline manifest to use for initializing pre-existing artifacts.
    * @returns {Promise<Manifest>} A new Manifest object reprenting the current exception list.
    */
   public async buildNewManifest(opts?: BuildManifestOpts): Promise<Manifest> {
     // Build new exception list artifacts
-    const artifacts = await this.buildExceptionListArtifacts(opts?.artifactSchemaVersion ?? 'v1');
+    const artifacts = await this.buildExceptionListArtifacts();
 
     // Build new manifest
     const manifest = Manifest.fromArtifacts(
@@ -299,7 +293,7 @@ export class ManifestManager {
    */
   public async commit(manifest: Manifest): Promise<Error | null> {
     try {
-      const manifestClient = this.getManifestClient(manifest.getSchemaVersion());
+      const manifestClient = this.getManifestClient();
 
       // Commit the new manifest
       const manifestSo = manifest.toSavedObject();

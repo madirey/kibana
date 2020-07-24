@@ -20,5 +20,4 @@ export const downloadArtifactResponseSchema = t.exact(
     headers,
   })
 );
-
 export type DownloadArtifactResponseSchema = t.TypeOf<typeof downloadArtifactResponseSchema>;

@@ -12,7 +12,6 @@ import {
   ManifestManagerMockType,
 } from './services/artifacts/manifest_manager/manifest_manager.mock';
 import { getPackageConfigCreateCallback } from './ingest_integration';
-import { ManifestConstants } from './lib/artifacts';
 
 describe('ingest_integration tests ', () => {
   describe('ingest_integration sanity checks', () => {
@@ -70,9 +69,7 @@ describe('ingest_integration tests ', () => {
       const logger = loggingSystemMock.create().get('ingest_integration.test');
       const manifestManager = getManifestManagerMock();
       manifestManager.pushArtifacts = jest.fn().mockResolvedValue([new Error('error updating')]);
-      const lastComputed = await manifestManager.getLastComputedManifest(
-        ManifestConstants.SCHEMA_VERSION
-      );
+      const lastComputed = await manifestManager.getLastComputedManifest();
 
       const callback = getPackageConfigCreateCallback(logger, manifestManager);
       const policyConfig = createNewPackageConfigMock();
@@ -90,9 +87,7 @@ describe('ingest_integration tests ', () => {
       const manifestManager = getManifestManagerMock({
         mockType: ManifestManagerMockType.InitialSystemState,
       });
-      const lastComputed = await manifestManager.getLastComputedManifest(
-        ManifestConstants.SCHEMA_VERSION
-      );
+      const lastComputed = await manifestManager.getLastComputedManifest();
       expect(lastComputed).toEqual(null);
 
       manifestManager.buildNewManifest = jest.fn().mockRejectedValue(new Error('abcd'));
@@ -107,9 +102,7 @@ describe('ingest_integration tests ', () => {
     test('subsequent policy creations succeed', async () => {
       const logger = loggingSystemMock.create().get('ingest_integration.test');
       const manifestManager = getManifestManagerMock();
-      const lastComputed = await manifestManager.getLastComputedManifest(
-        ManifestConstants.SCHEMA_VERSION
-      );
+      const lastComputed = await manifestManager.getLastComputedManifest();
 
       manifestManager.buildNewManifest = jest.fn().mockResolvedValue(lastComputed); // no diffs
       const callback = getPackageConfigCreateCallback(logger, manifestManager);
