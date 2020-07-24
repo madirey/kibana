@@ -29,10 +29,12 @@ export interface ManifestDiff {
 }
 
 export class Manifest {
+  private diffs: ManifestDiff[];
   private entries: Record<string, ManifestEntry>;
   private version: ManifestVersion;
 
   constructor(version?: Partial<ManifestVersion>) {
+    this.diffs = [];
     this.entries = {};
 
     const decodedVersion = {
@@ -62,15 +64,19 @@ export class Manifest {
     if (semVer == null) {
       throw new Error('Invalid semver.');
     }
-    const newSemver = bumpSemanticVersion(semVer);
-    if (newSemver == null) {
-      throw new Error('Invalid semver.');
-    }
     const manifest = new Manifest({
       schemaVersion,
-      semanticVersion: newSemver,
+      semanticVersion: semVer,
       soVersion: oldManifest.getSoVersion(),
     });
+    manifest.diffs = manifest.diff(oldManifest);
+    if (manifest.diffs.length) {
+      const newSemver = bumpSemanticVersion(semVer);
+      if (newSemver == null) {
+        throw new Error('Invalid semver.');
+      }
+      manifest.version.semanticVersion = newSemver;
+    }
     artifacts.forEach((artifact) => {
       const id = getArtifactId(artifact);
       const existingArtifact = oldManifest.getArtifact(id);
@@ -101,6 +107,28 @@ export class Manifest {
       return err;
     }
     return null;
+  }
+
+  public diff(manifest: Manifest): ManifestDiff[] {
+    const diffs: ManifestDiff[] = [];
+
+    for (const id in manifest.getEntries()) {
+      if (!this.contains(id)) {
+        diffs.push({ type: 'delete', id });
+      }
+    }
+
+    for (const id in this.entries) {
+      if (!manifest.contains(id)) {
+        diffs.push({ type: 'add', id });
+      }
+    }
+
+    return diffs;
+  }
+
+  public getDiffs(): ManifestDiff[] {
+    return this.diffs;
   }
 
   public getSchemaVersion(): ManifestSchemaVersion {
@@ -134,24 +162,6 @@ export class Manifest {
 
   public getArtifact(artifactId: string): InternalArtifactSchema | undefined {
     return this.getEntry(artifactId)?.getArtifact();
-  }
-
-  public diff(manifest: Manifest): ManifestDiff[] {
-    const diffs: ManifestDiff[] = [];
-
-    for (const id in manifest.getEntries()) {
-      if (!this.contains(id)) {
-        diffs.push({ type: 'delete', id });
-      }
-    }
-
-    for (const id in this.entries) {
-      if (!manifest.contains(id)) {
-        diffs.push({ type: 'add', id });
-      }
-    }
-
-    return diffs;
   }
 
   public toEndpointFormat(): ManifestSchema {

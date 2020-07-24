@@ -100,7 +100,7 @@ export class ManifestTask {
 
       // New computed manifest based on current state of exception list
       const newManifest = await manifestManager.buildNewManifest({ baselineManifest: oldManifest });
-      const diffs = newManifest.diff(oldManifest);
+      const diffs = newManifest.getDiffs();
 
       // Compress new artifacts
       const adds = diffs.filter((diff) => diff.type === 'add').map((diff) => diff.id);
