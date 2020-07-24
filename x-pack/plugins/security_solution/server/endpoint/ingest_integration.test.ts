@@ -61,7 +61,7 @@ describe('ingest_integration tests ', () => {
               '/api/endpoint/artifacts/download/endpoint-exceptionlist-windows-v1/d801aa1fb7ddcc330a5e3173372ea6af4a3d08ec58074478e85aa5603e926658',
           },
         },
-        manifest_version: '1.0.0',
+        manifest_version: '1.0.1',
         schema_version: 'v1',
       });
     });

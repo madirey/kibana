@@ -5,8 +5,10 @@
  */
 
 import { InternalArtifactSchema } from '../../schemas/artifacts';
-import { CompressionAlgorithm } from '../../../../common/endpoint/schema/common';
-import { ManifestEntrySchema } from '../../../../common/endpoint/schema/manifest';
+import {
+  CompressionAlgorithm,
+  ManifestEntrySchema,
+} from '../../../../common/endpoint/schema/manifest';
 import { getArtifactId } from './common';
 
 export class ManifestEntry {
