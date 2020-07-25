@@ -69,14 +69,6 @@ export class Manifest {
       semanticVersion: semVer,
       soVersion: oldManifest.getSoVersion(),
     });
-    manifest.diffs = manifest.diff(oldManifest);
-    if (manifest.diffs.length) {
-      const newSemver = bumpSemanticVersion(semVer);
-      if (newSemver == null) {
-        throw new Error('Invalid semver.');
-      }
-      manifest.version.semanticVersion = newSemver;
-    }
     artifacts.forEach((artifact) => {
       const id = getArtifactId(artifact);
       const existingArtifact = oldManifest.getArtifact(id);
@@ -86,6 +78,14 @@ export class Manifest {
         manifest.addEntry(artifact);
       }
     });
+    manifest.diffs = manifest.diff(oldManifest);
+    if (manifest.diffs.length) {
+      const newSemver = bumpSemanticVersion(semVer);
+      if (newSemver == null) {
+        throw new Error('Invalid semver.');
+      }
+      manifest.version.semanticVersion = newSemver;
+    }
     return manifest;
   }
 
