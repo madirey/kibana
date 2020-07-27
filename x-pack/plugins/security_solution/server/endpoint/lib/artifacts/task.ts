@@ -11,8 +11,11 @@ import {
   TaskManagerStartContract,
 } from '../../../../../task_manager/server';
 import { EndpointAppContext } from '../../types';
-import { reportErrors } from './common';
+/*
+import { reportErrors, bumpSemanticVersion } from './common';
 import { InternalArtifactCompleteSchema } from '../../schemas/artifacts';
+import { ManifestDiff, Manifest } from './manifest';
+*/
 
 export const ManifestTaskConstants = {
   TIMEOUT: '1m',
@@ -80,16 +83,80 @@ export class ManifestTask {
     if (taskId !== this.getTaskId()) {
       // old task, return
       this.logger.debug(`Outdated task running: ${taskId}`);
+    }
+
+    /*
+    const artifactClient = this.endpointAppContext.service.getArtifactClient();
+    const manifestClient = this.endpointAppContext.service.getManifestClient();
+
+    if (artifactClient == null) {
+      this.logger.debug('ArtifactClient not available.');
       return;
     }
 
-    const manifestManager = this.endpointAppContext.service.getManifestManager();
-
-    if (manifestManager === undefined) {
-      this.logger.debug('Manifest Manager not available.');
+    if (manifestClient == null) {
+      this.logger.debug('ManifestClient not available.');
       return;
     }
 
+    try {
+      // Last manifest we computed, which was saved to ES
+      const oldManifest = await manifestClient.getManifest('TODO');
+      if (oldManifest == null) {
+        this.logger.debug('User manifest not available yet.');
+        return;
+      }
+
+      const buildExceptionListArtifacts = async (): Promise<Record<string, InternalArtifactCompleteSchema>> => { return {} };
+      const getDiffs = (oldIds: string[], newIds: string[]): ManifestDiff[] =>  { return [] };
+      const compressArtifacts = async (artifacts: InternalArtifactCompleteSchema[]) => { };
+      const persistArtifacts = async (artifacts: InternalArtifactCompleteSchema[]) => { };
+      const tryDispatch = async (manifest: Manifest) => { };
+
+      // New computed manifest based on current state of exception list
+      // returns map(artifactId => artifact)
+      const currentArtifacts = await buildExceptionListArtifacts();
+      const artifactIds = Object.keys(currentArtifacts);
+
+      const diffs = getDiffs(oldManifest.attributes.ids, artifactIds);
+
+      const oldArtifactIds = diffs.filter((diff) => diff.type === 'delete').map((diff) => diff.id);
+      const newArtifactIds = diffs.filter((diff) => diff.type === 'add').map((diff) => diff.id);
+      if (newArtifactIds.length) {
+        const newArtifacts = newArtifactIds.map((artifactId) => currentArtifacts[artifactId]);
+        const compressErrors = await compressArtifacts(newArtifacts);
+        const persistErrors = await persistArtifacts(newArtifacts);
+      }
+
+      const newManifest = {
+        // TODO: merge with old artifacts here, don't lose the compression
+        ...oldManifest,
+        ids: artifactIds,
+        semanticVersion: diffs.length
+          ? bumpSemanticVersion(oldManifest.semanticVersion)
+          : oldManifest.semanticVersion,
+      };
+
+      if (diffs.length) {
+        const commitErrors = await manifestClient.upsertManifest(newManifest);
+      }
+
+      const dispatchErrors = await tryDispatch(newManifest);
+
+      for (const artifactId of oldArtifactIds) {
+        try {
+          await artifactClient.deleteArtifact(artifactId);
+          this.logger.info(`Cleaned up artifact ${artifactId}`);
+        } catch (err) {
+          // errors.push(err);
+        }
+      }
+    } catch (err) {
+      this.logger.error(err);
+    }
+    */
+
+    /*
     try {
       // Last manifest we computed, which was saved to ES
       const oldManifest = await manifestManager.getLastComputedManifest();
@@ -148,5 +215,6 @@ export class ManifestTask {
     } catch (err) {
       this.logger.error(err);
     }
+    */
   };
 }

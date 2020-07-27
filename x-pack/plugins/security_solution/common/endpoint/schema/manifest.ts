@@ -81,11 +81,13 @@ export const manifestSchema = t.intersection([
 ]);
 export type ManifestSchema = t.TypeOf<typeof manifestSchema>;
 
+export const manifestArtifactsSchema = t.record(identifier, manifestEntryDispatchSchema);
+
 export const manifestDispatchSchema = t.intersection([
   manifestBaseSchema,
   t.exact(
     t.type({
-      artifacts: t.record(identifier, manifestEntryDispatchSchema),
+      artifacts: manifestArtifactsSchema,
     })
   ),
 ]);

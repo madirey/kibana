@@ -13,10 +13,10 @@ import {
 } from '../../schemas/artifacts';
 import { SemanticVersion } from '../../../../common/endpoint/schema/common';
 import {
-  ManifestSchema,
   ManifestSchemaVersion,
-  manifestSchema,
   ManifestEntrySchema,
+  ManifestDispatchSchema,
+  manifestDispatchSchema,
 } from '../../../../common/endpoint/schema/manifest';
 import { ManifestEntry } from './manifest_entry';
 import { maybeCompressArtifact, isCompressed } from './lists';
@@ -164,7 +164,7 @@ export class Manifest {
     return this.getEntry(artifactId)?.getArtifact();
   }
 
-  public toEndpointFormat(): ManifestSchema {
+  public toEndpointFormat(): ManifestDispatchSchema {
     const manifestObj = {
       manifest_version: this.version.semanticVersion,
       schema_version: this.version.schemaVersion,
@@ -175,18 +175,19 @@ export class Manifest {
       manifestObj.artifacts[entry.getIdentifier()] = entry.getRecord();
     }
 
-    const [validated, errors] = validate(manifestObj, manifestSchema);
+    const [validated, errors] = validate(manifestObj, manifestDispatchSchema);
     if (errors != null) {
       throw new Error(errors);
     }
 
-    return validated as ManifestSchema;
+    return validated as ManifestDispatchSchema;
   }
 
   public toSavedObject(): InternalManifestSchema {
     return {
-      ids: Object.keys(this.entries),
+      schemaVersion: this.version.schemaVersion,
       semanticVersion: this.version.semanticVersion,
+      artifacts: this.toEndpointFormat().artifacts,
     };
   }
 }

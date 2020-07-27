@@ -5,12 +5,15 @@
  */
 
 import * as t from 'io-ts';
-import { semanticVersion, sha256 } from '../../../../common/endpoint/schema/common';
 import {
   compressionAlgorithm,
   encryptionAlgorithm,
   identifier,
   size,
+  manifestArtifactsSchema,
+  manifestSchemaVersion,
+  semanticVersion,
+  sha256,
 } from '../../../../common/endpoint/schema/manifest';
 import { created } from './common';
 
@@ -57,8 +60,9 @@ export type InternalArtifactCreateSchema = t.TypeOf<typeof internalArtifactCreat
 
 export const internalManifestSchema = t.exact(
   t.type({
-    ids: t.array(identifier),
+    schemaVersion: manifestSchemaVersion,
     semanticVersion,
+    artifacts: manifestArtifactsSchema,
   })
 );
 export type InternalManifestSchema = t.TypeOf<typeof internalManifestSchema>;
@@ -68,6 +72,9 @@ export const internalManifestCreateSchema = t.intersection([
   t.exact(
     t.type({
       created,
+      schemaVersion: manifestSchemaVersion,
+      semanticVersion,
+      artifacts: manifestArtifactsSchema,
     })
   ),
 ]);
