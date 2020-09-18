@@ -168,7 +168,6 @@ export const getNewExceptionItem = ({
   ruleName: string;
 }): CreateExceptionListItemBuilderSchema => {
   return {
-    _tags: [listType],
     comments: [],
     description: `${ruleName} - exception list item`,
     entries: [
@@ -327,12 +326,10 @@ export const enrichExceptionItemsWithOS = (
   exceptionItems: Array<ExceptionListItemSchema | CreateExceptionListItemSchema>,
   osTypes: string[]
 ): Array<ExceptionListItemSchema | CreateExceptionListItemSchema> => {
-  const osTags = osTypes.map((os) => `os:${os}`);
   return exceptionItems.map((item: ExceptionListItemSchema | CreateExceptionListItemSchema) => {
-    const newTags = item._tags ? union(item._tags, osTags) : [...osTags];
     return {
       ...item,
-      _tags: newTags,
+      os_types: osTypes,
     };
   });
 };

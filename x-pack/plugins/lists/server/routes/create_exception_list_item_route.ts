@@ -39,7 +39,6 @@ export const createExceptionListItemRoute = (router: IRouter): void => {
         const {
           namespace_type: namespaceType,
           name,
-          _tags,
           tags,
           meta,
           comments,
@@ -87,7 +86,7 @@ export const createExceptionListItemRoute = (router: IRouter): void => {
               }
             }
             const createdList = await exceptionLists.createExceptionListItem({
-              _tags,
+              _tags: [],
               comments,
               description,
               entries,
