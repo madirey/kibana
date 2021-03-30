@@ -1,0 +1,18 @@
+{
+  "type": "index",
+  "value": {
+    "aliases": {
+      "threat-indicator": {
+        "is_write_index": false
+      }
+    },
+    "index": "threshold-0001",
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        }
+      }
+    }
+  }
+}

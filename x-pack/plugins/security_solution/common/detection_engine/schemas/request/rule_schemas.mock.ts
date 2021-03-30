@@ -111,8 +111,14 @@ export const getCreateThresholdRulesSchemaMock = (ruleId = 'rule-1'): ThresholdC
   type: 'threshold',
   query: 'user.name: root or user.name: admin',
   threshold: {
-    field: 'some.field',
+    field: ['some.field'],
     value: 4,
+    cardinality: [
+      {
+        field: 'process.name',
+        value: 5,
+      },
+    ],
   },
 });
 
