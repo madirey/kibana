@@ -18,7 +18,7 @@ curl -X POST http://localhost:5601/api/alerts/alert \
       "threshold": 0.90
    },
    "consumer":"alerts",
-   "alertTypeId":"siem.referenceRule",
+   "alertTypeId":"siem.referenceRuleHierarchical",
    "schedule":{
       "interval":"1m"
    },
