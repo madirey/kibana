@@ -53,12 +53,15 @@ export function createPersistenceRuleTypeFactory(): CreatePersistenceRuleType<De
       executor: async (options) => {
         const {
           services: { scopedRuleRegistryClient, alertInstanceFactory, logger },
-          rule,
         } = options;
 
         const currentAlerts: Record<
           string,
-          UserDefinedAlertFields<DefaultFieldMap> & { 'alert.id': string }
+          UserDefinedAlertFields<DefaultFieldMap> & {
+            'alert.id': string;
+            'alert.uuid': string;
+            '@timestamp': string;
+          }
         > = {};
 
         const timestamp = options.startedAt.toISOString();
@@ -74,6 +77,9 @@ export function createPersistenceRuleTypeFactory(): CreatePersistenceRuleType<De
                 currentAlerts[alert.id] = {
                   ...alert.fields,
                   'alert.id': alert.id,
+                  'alert.uuid': v4(),
+                  'event.kind': 'signal',
+                  '@timestamp': timestamp,
                 };
               });
               return alerts.map((alert) => alertInstanceFactory(alert.id));
@@ -81,69 +87,11 @@ export function createPersistenceRuleTypeFactory(): CreatePersistenceRuleType<De
           },
         });
 
-        const newAlertIds = Object.keys(currentAlerts);
+        const numAlerts = Object.keys(currentAlerts).length;
+        logger.debug(`Tracking ${numAlerts}`);
 
-        logger.debug(`Detected ${currentAlerts.length} alerts`);
-
-        const alertsDataMap: Record<string, UserDefinedAlertFields<DefaultFieldMap>> = {
-          ...currentAlerts,
-        };
-
-        const eventsToIndex: Array<OutputOfFieldMap<DefaultFieldMap>> = allAlertIds.map(
-          (alertId) => {
-            const alertData = alertsDataMap[alertId];
-
-            if (!alertData) {
-              logger.warn(`Could not find alert data for ${alertId}`);
-            }
-
-            const event: OutputOfFieldMap<DefaultFieldMap> = {
-              ...alertData,
-              '@timestamp': timestamp,
-              'event.kind': 'state',
-              'alert.id': alertId,
-            };
-
-            const isNew = !state.trackedAlerts[alertId];
-            const isRecovered = !currentAlerts[alertId];
-            const isActiveButNotNew = !isNew && !isRecovered;
-            const isActive = !isRecovered;
-
-            const { alertUuid, started } = state.trackedAlerts[alertId] ?? {
-              alertUuid: v4(),
-              started: timestamp,
-            };
-
-            event['alert.start'] = started;
-            event['alert.uuid'] = alertUuid;
-
-            if (isNew) {
-              event['event.action'] = 'open';
-            }
-
-            if (isRecovered) {
-              event['alert.end'] = timestamp;
-              event['event.action'] = 'close';
-              event['alert.status'] = 'closed';
-            }
-
-            if (isActiveButNotNew) {
-              event['event.action'] = 'active';
-            }
-
-            if (isActive) {
-              event['alert.status'] = 'open';
-            }
-
-            event['alert.duration.us'] =
-              (options.startedAt.getTime() - new Date(event['alert.start']!).getTime()) * 1000;
-
-            return event;
-          }
-        );
-
-        if (eventsToIndex.length) {
-          await scopedRuleRegistryClient.bulkIndex(eventsToIndex);
+        if (numAlerts) {
+          await scopedRuleRegistryClient.bulkIndex(Object.values(currentAlerts));
         }
 
         return currentAlerts;

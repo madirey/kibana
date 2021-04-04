@@ -43,7 +43,10 @@ import { FleetStartContract } from '../../fleet/server';
 import { TaskManagerSetupContract, TaskManagerStartContract } from '../../task_manager/server';
 import { initServer } from './init_server';
 import { compose } from './lib/compose/kibana';
-import { referenceRuleAlertType } from './lib/detection_engine/reference_rules/reference_rule';
+import {
+  referenceRuleAlertType,
+  referenceRulePersistenceAlertType,
+} from './lib/detection_engine/reference_rules/reference_rule';
 import { initRoutes } from './routes';
 import { isAlertExecutor } from './lib/detection_engine/signals/types';
 import { signalRulesAlertType } from './lib/detection_engine/signals/signal_rule_alert_type';
@@ -295,6 +298,7 @@ export class Plugin implements IPlugin<PluginSetup, PluginStart, SetupPlugins, S
 
     // Register reference rule types via rule-registry
     this.setupPlugins.ruleRegistry.registerType(referenceRuleAlertType);
+    this.setupPlugins.ruleRegistry.registerType(referenceRulePersistenceAlertType);
 
     // Continue to register legacy rules against alerting client exposed through rule-registry
     if (this.setupPlugins.alerting != null) {

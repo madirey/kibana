@@ -6,7 +6,7 @@
 # 2.0.
 #
 
-curl -X POST http://localhost:5601/${BASE_PATH}/api/alerts/alert \
+curl -X POST http://localhost:5601/api/alerts/alert \
      -u ${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD} \
      -H 'kbn-xsrf: true' \
      -H 'Content-Type: application/json' \
@@ -18,7 +18,7 @@ curl -X POST http://localhost:5601/${BASE_PATH}/api/alerts/alert \
       "threshold": 0.90
    },
    "consumer":"alerts",
-   "alertTypeId":"siem.referenceRule",
+   "alertTypeId":"siem.referenceRulePersistence",
    "schedule":{
       "interval":"1m"
    },
