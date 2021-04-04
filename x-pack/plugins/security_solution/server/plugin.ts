@@ -45,6 +45,7 @@ import { initServer } from './init_server';
 import { compose } from './lib/compose/kibana';
 import {
   referenceRuleAlertType,
+  referenceRuleHierarchicalAlertType,
   referenceRulePersistenceAlertType,
 } from './lib/detection_engine/reference_rules/reference_rule';
 import { initRoutes } from './routes';
@@ -64,6 +65,8 @@ import {
   SIGNALS_ID,
   NOTIFICATIONS_ID,
   REFERENCE_RULE_ALERT_TYPE_ID,
+  REFERENCE_RULE_HIERARCHICAL_ALERT_TYPE_ID,
+  REFERENCE_RULE_PERSISTENCE_ALERT_TYPE_ID,
 } from '../common/constants';
 import { registerEndpointRoutes } from './endpoint/routes/metadata';
 import { registerLimitedConcurrencyRoutes } from './endpoint/routes/limited_concurrency';
@@ -222,7 +225,11 @@ export class Plugin implements IPlugin<PluginSetup, PluginStart, SetupPlugins, S
     registerTrustedAppsRoutes(router, endpointContext);
     registerDownloadArtifactRoute(router, endpointContext, this.artifactsCache);
 
-    const referenceRuleTypes = [REFERENCE_RULE_ALERT_TYPE_ID];
+    const referenceRuleTypes = [
+      REFERENCE_RULE_ALERT_TYPE_ID,
+      REFERENCE_RULE_HIERARCHICAL_ALERT_TYPE_ID,
+      REFERENCE_RULE_PERSISTENCE_ALERT_TYPE_ID,
+    ];
     const ruleTypes = [SIGNALS_ID, NOTIFICATIONS_ID, ...referenceRuleTypes];
 
     plugins.features.registerKibanaFeature({
@@ -298,6 +305,7 @@ export class Plugin implements IPlugin<PluginSetup, PluginStart, SetupPlugins, S
 
     // Register reference rule types via rule-registry
     this.setupPlugins.ruleRegistry.registerType(referenceRuleAlertType);
+    this.setupPlugins.ruleRegistry.registerType(referenceRuleHierarchicalAlertType);
     this.setupPlugins.ruleRegistry.registerType(referenceRulePersistenceAlertType);
 
     // Continue to register legacy rules against alerting client exposed through rule-registry

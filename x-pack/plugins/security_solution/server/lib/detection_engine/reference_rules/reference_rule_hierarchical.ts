@@ -47,10 +47,20 @@ export const referenceRuleAlertType = createSecurityHierarchicalRuleType({
   minimumLicenseRequired: 'basic',
   producer: 'security-solution',
   async executor({ services, params }) {
-    services.alertWitHierarchy({
-      id: `${uuidv4()}`,
-      fields: {},
-    });
+    services.alertWithHierarchy([
+      {
+        id: `${uuidv4()}`,
+        fields: {},
+      },
+      {
+        id: `${uuidv4()}`,
+        fields: {},
+      },
+      {
+        id: `${uuidv4()}`,
+        fields: {},
+      },
+    ]);
 
     return {
       lastChecked: new Date(),
