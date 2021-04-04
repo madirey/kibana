@@ -10,7 +10,10 @@ import { PluginInitializerContext } from 'src/core/server';
 import { RuleRegistryPlugin } from './plugin';
 
 export { RuleRegistryPluginSetupContract } from './plugin';
+export { createHierarchicalRuleTypeFactory } from './rule_registry/rule_type_helpers/create_hierarchical_rule_type_factory';
 export { createLifecycleRuleTypeFactory } from './rule_registry/rule_type_helpers/create_lifecycle_rule_type_factory';
+export { createPersistenceRuleTypeFactory } from './rule_registry/rule_type_helpers/create_persistence_rule_type_factory';
+export { createThresholdRuleTypeFactory } from './rule_registry/rule_type_helpers/create_threshold_rule_type_factory';
 export { ecsFieldMap } from './generated/ecs_field_map';
 export { pickWithPatterns } from './rule_registry/field_map/pick_with_patterns';
 
