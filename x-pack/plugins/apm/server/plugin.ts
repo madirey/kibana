@@ -47,7 +47,7 @@ import { uiSettings } from './ui_settings';
 import type { ApmPluginRequestHandlerContext } from './routes/typings';
 
 export type APMPluginSetup = ReturnType<APMPlugin['setup']>;
-export type APMRuleRegistry = APMPluginSetup['registry'];
+export type APMRuleRegistry = APMPluginSetup['ruleRegistry'];
 
 export class APMPlugin implements Plugin<APMPluginSetup> {
   private currentConfig?: APMConfig;
@@ -143,8 +143,8 @@ export class APMPlugin implements Plugin<APMPluginSetup> {
         config: await mergedConfig$.pipe(take(1)).toPromise(),
       });
 
-    const apmRuleRegistry = plugins.observability.registry.create({
-      namespace: 'apm',
+    const apmRuleRegistry = plugins.observability.ruleRegistry.create({
+      name: 'apm',
       fieldMap: {
         'service.environment': {
           type: 'keyword',
@@ -194,7 +194,7 @@ export class APMPlugin implements Plugin<APMPluginSetup> {
           },
         });
       },
-      registry: apmRuleRegistry,
+      ruleRegistry: apmRuleRegistry,
     };
   }
 

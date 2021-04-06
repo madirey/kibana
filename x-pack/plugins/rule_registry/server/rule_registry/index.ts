@@ -28,12 +28,13 @@ import { ScopedRuleRegistryClient } from './create_scoped_rule_registry_client/t
 interface RuleRegistryOptions<TFieldMap extends FieldMap> {
   kibanaIndex: string;
   kibanaVersion: string;
-  namespace: string;
+  name: string;
   logger: Logger;
   core: CoreSetup;
   fieldMap: TFieldMap;
   ilmPolicy: ILMPolicy;
   alertingPluginSetupContract: AlertingPluginSetupContract;
+  writeEnabled: boolean;
 }
 
 export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
@@ -64,19 +65,23 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
       logger: logger.get('esAdapter'),
     });
 
-    this.initialize()
-      .then(() => {
-        this.options.logger.debug('Bootstrapped alerts index');
-        signal(true);
-      })
-      .catch((err) => {
-        logger.error(inspect(err, { depth: null }));
-        signal(false);
-      });
+    if (this.options.writeEnabled) {
+      this.initialize()
+        .then(() => {
+          this.options.logger.debug('Bootstrapped alerts index');
+          signal(true);
+        })
+        .catch((err) => {
+          logger.error(inspect(err, { depth: null }));
+          signal(false);
+        });
+    } else {
+      logger.debug('Write disabled, indices are not being bootstrapped');
+    }
   }
 
   private getEsNames() {
-    const base = [this.options.kibanaIndex, this.options.namespace];
+    const base = [this.options.kibanaIndex, this.options.name];
     const indexAliasName = [...base, this.options.kibanaVersion].join('-');
     const policyName = [...base, 'policy'].join('-');
 
@@ -131,7 +136,11 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
   createScopedRuleRegistryClient(
     request: KibanaRequest,
     context: RequestHandlerContext
-  ): ScopedRuleRegistryClient<TFieldMap> {
+  ): ScopedRuleRegistryClient<TFieldMap> | undefined {
+    if (!this.options.writeEnabled) {
+      return undefined;
+    }
+
     const { spaceId: namespace } = getSpaceIdFromPath(request.url.pathname);
 
     return createScopedRuleRegistryClient({
@@ -170,21 +179,6 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
 
         const producer = type.producer;
 
-        const scopedRuleRegistryClient = createScopedRuleRegistryClient({
-          savedObjectsClient: services.savedObjectsClient,
-          scopedClusterClient: services.scopedClusterClient,
-          clusterClientAdapter: this.esAdapter,
-          fieldMap: this.options.fieldMap,
-          index: this.getEsNames().indexAliasName,
-          namespace,
-          ruleData: {
-            producer,
-            rule,
-            tags,
-          },
-          logger: this.options.logger,
-        });
-
         return type.executor({
           ...executorOptions,
           rule,
@@ -192,7 +186,24 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
           services: {
             ...services,
             logger,
-            scopedRuleRegistryClient,
+            ...(this.options.writeEnabled
+              ? {
+                  scopedRuleRegistryClient: createScopedRuleRegistryClient({
+                    savedObjectsClient: services.savedObjectsClient,
+                    scopedClusterClient: services.scopedClusterClient,
+                    clusterClientAdapter: this.esAdapter,
+                    fieldMap: this.options.fieldMap,
+                    index: this.getEsNames().indexAliasName,
+                    namespace,
+                    ruleData: {
+                      producer,
+                      rule,
+                      tags,
+                    },
+                    logger: this.options.logger,
+                  }),
+                }
+              : {}),
           },
         });
       },
@@ -200,11 +211,11 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
   }
 
   create<TNextFieldMap extends FieldMap>({
-    namespace,
+    name,
     fieldMap,
     ilmPolicy,
   }: {
-    namespace: string;
+    name: string;
     fieldMap: TNextFieldMap;
     ilmPolicy?: ILMPolicy;
   }): RuleRegistry<TFieldMap & TNextFieldMap> {
@@ -214,8 +225,8 @@ export class RuleRegistry<TFieldMap extends DefaultFieldMap> {
 
     const child = new RuleRegistry({
       ...this.options,
-      logger: this.options.logger.get(namespace),
-      namespace: [this.options.namespace, namespace].filter(Boolean).join('-'),
+      logger: this.options.logger.get(name),
+      name: [this.options.name, name].filter(Boolean).join('-'),
       fieldMap: mergedFieldMap,
       ...(ilmPolicy ? { ilmPolicy } : {}),
     });
