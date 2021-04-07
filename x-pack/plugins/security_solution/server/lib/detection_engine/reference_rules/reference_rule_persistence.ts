@@ -9,7 +9,7 @@ import { schema } from '@kbn/config-schema';
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { buildEsQuery } from '../../../../../../../src/plugins/data/common';
+import { buildEsQuery, IIndexPattern } from '../../../../../../../src/plugins/data/common';
 
 import { createPersistenceRuleTypeFactory } from '../../../../../rule_registry/server';
 import { REFERENCE_RULE_PERSISTENCE_ALERT_TYPE_ID } from '../../../../common/constants';
@@ -55,10 +55,20 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
       return {};
     }
 
+    const indexPattern: IIndexPattern = {
+      fields: [],
+      title: '*',
+    };
+
+    const esQuery = buildEsQuery(indexPattern, { query, language: 'kuery' }, []);
+    // TODO: fix query typing below, support all bool params
     const { events } = await scopedRuleRegistryClient.search({
       body: {
-        // query: getQueryFilter(query, 'kuery', [], ['*'], []),
-        query: buildEsQuery(['*'], query, []),
+        query: {
+          bool: {
+            must: esQuery.bool.must,
+          },
+        },
         fields: ['*'],
         sort: {
           '@timestamp': 'asc' as const,
@@ -66,10 +76,11 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
       },
     });
 
+    // TODO: filter event fields
     alertWithPersistence(
       events.map((event) => ({
         id: `${uuidv4()}`,
-        fields: event._source,
+        fields: event,
       }))
     );
 
