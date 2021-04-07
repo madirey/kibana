@@ -9,6 +9,8 @@ import { schema } from '@kbn/config-schema';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import { buildEsQuery } from '../../../../../../../src/plugins/data/common';
+
 import { createPersistenceRuleTypeFactory } from '../../../../../rule_registry/server';
 import { REFERENCE_RULE_PERSISTENCE_ALERT_TYPE_ID } from '../../../../common/constants';
 import { SecurityRuleRegistry } from '../../../plugin';
@@ -45,23 +47,31 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
   },
   minimumLicenseRequired: 'basic',
   producer: 'security-solution',
-  async executor({ services, params }) {
-    // TODO: search on query
-    // THEN alertWithPersistence on search results
-    services.alertWithPersistence([
-      {
-        id: `${uuidv4()}`,
-        fields: {},
+  async executor({
+    services: { alertWithPersistence, logger, scopedRuleRegistryClient },
+    params: { query },
+  }) {
+    if (!scopedRuleRegistryClient) {
+      return {};
+    }
+
+    const { events } = await scopedRuleRegistryClient.search({
+      body: {
+        // query: getQueryFilter(query, 'kuery', [], ['*'], []),
+        query: buildEsQuery(['*'], query, []),
+        fields: ['*'],
+        sort: {
+          '@timestamp': 'asc' as const,
+        },
       },
-      {
+    });
+
+    alertWithPersistence(
+      events.map((event) => ({
         id: `${uuidv4()}`,
-        fields: {},
-      },
-      {
-        id: `${uuidv4()}`,
-        fields: {},
-      },
-    ]);
+        fields: event._source,
+      }))
+    );
 
     return {
       lastChecked: new Date(),

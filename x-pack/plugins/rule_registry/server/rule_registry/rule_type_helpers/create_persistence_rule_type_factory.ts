@@ -92,7 +92,7 @@ export function createPersistenceRuleTypeFactory(): CreatePersistenceRuleType<De
         const numAlerts = Object.keys(currentAlerts).length;
         logger.debug(`Tracking ${numAlerts}`);
 
-        if (numAlerts) {
+        if (scopedRuleRegistryClient && numAlerts) {
           await scopedRuleRegistryClient.bulkIndex(Object.values(currentAlerts));
         }
 
