@@ -73,6 +73,8 @@ export function createPersistenceRuleTypeFactory(): CreatePersistenceRuleType<De
             alertWithPersistence: (
               alerts: Array<{ id: string; fields: UserDefinedAlertFields<DefaultFieldMap> }>
             ) => {
+              // TODO: if there is rule.id, then add hierarchical fields
+              // ... parents, depth, etc...
               alerts.forEach((alert) => {
                 currentAlerts[alert.id] = {
                   ...alert.fields,

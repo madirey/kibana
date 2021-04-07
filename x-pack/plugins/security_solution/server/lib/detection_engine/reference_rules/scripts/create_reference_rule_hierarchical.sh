@@ -6,7 +6,10 @@
 # 2.0.
 #
 
-curl -X POST http://localhost:5601/api/alerts/alert \
+# TODO: create a persistence rule matching against `signal.rule.id`
+# (the id of the rule type) or whatever the equivalent field is.
+# Have the persistence rule create those fields on the alert.
+curl -X POST http://localhost:5601/${BASE_PATH}/api/alerts/alert \
      -u ${ELASTICSEARCH_USERNAME}:${ELASTICSEARCH_PASSWORD} \
      -H 'kbn-xsrf: true' \
      -H 'Content-Type: application/json' \
@@ -14,8 +17,7 @@ curl -X POST http://localhost:5601/api/alerts/alert \
      -d '
 {
   "params":{
-      "server":"howdy",
-      "threshold": 0.90
+      "query": "rule.id:siem.referenceRulePersistence"
    },
    "consumer":"alerts",
    "alertTypeId":"siem.referenceRuleHierarchical",

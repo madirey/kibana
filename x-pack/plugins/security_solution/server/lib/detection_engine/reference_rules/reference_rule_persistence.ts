@@ -20,8 +20,7 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
   name: 'ReferenceRule persistence alert type',
   validate: {
     params: schema.object({
-      server: schema.string(),
-      threshold: schema.number({ min: 0, max: 1 }),
+      query: schema.string(),
     }),
   },
   actionGroups: [
@@ -47,6 +46,8 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
   minimumLicenseRequired: 'basic',
   producer: 'security-solution',
   async executor({ services, params }) {
+    // TODO: search on query
+    // THEN alertWithPersistence on search results
     services.alertWithPersistence([
       {
         id: `${uuidv4()}`,
