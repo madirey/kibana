@@ -14,8 +14,7 @@ curl -X POST http://localhost:5601/${BASE_PATH}/api/alerts/alert \
      -d '
 {
   "params":{
-      "server":"howdy",
-      "threshold": 0.90
+     "query": "*:*"
    },
    "consumer":"alerts",
    "alertTypeId":"siem.referenceRulePersistence",

@@ -20,7 +20,7 @@ curl -X POST http://localhost:5601/${BASE_PATH}/api/alerts/alert \
       "query": "rule.id:siem.referenceRulePersistence"
    },
    "consumer":"alerts",
-   "alertTypeId":"siem.referenceRuleHierarchical",
+   "alertTypeId":"siem.referenceRulePersistence",
    "schedule":{
       "interval":"1m"
    },

@@ -45,9 +45,10 @@ import { initServer } from './init_server';
 import { compose } from './lib/compose/kibana';
 import {
   referenceRuleAlertType,
-  referenceRuleHierarchicalAlertType,
-  referenceRulePersistenceAlertType,
 } from './lib/detection_engine/reference_rules/reference_rule';
+import {
+  referenceRulePersistenceAlertType,
+} from './lib/detection_engine/reference_rules/reference_rule_persistence';
 import { initRoutes } from './routes';
 import { isAlertExecutor } from './lib/detection_engine/signals/types';
 import { signalRulesAlertType } from './lib/detection_engine/signals/signal_rule_alert_type';
@@ -295,7 +296,7 @@ export class Plugin implements IPlugin<PluginSetup, PluginStart, SetupPlugins, S
 
     // Create rule-registry scoped to security-solution (APP_ID uses caps, not supported)
     this.setupPlugins.ruleRegistry = plugins.ruleRegistry.create({
-      namespace: 'security-solution',
+      name: 'security-solution',
       fieldMap: {
         ...pickWithPatterns(ecsFieldMap, 'host.name', 'service.name'),
       },
@@ -305,7 +306,6 @@ export class Plugin implements IPlugin<PluginSetup, PluginStart, SetupPlugins, S
 
     // Register reference rule types via rule-registry
     this.setupPlugins.ruleRegistry.registerType(referenceRuleAlertType);
-    this.setupPlugins.ruleRegistry.registerType(referenceRuleHierarchicalAlertType);
     this.setupPlugins.ruleRegistry.registerType(referenceRulePersistenceAlertType);
 
     // Continue to register legacy rules against alerting client exposed through rule-registry
