@@ -48,13 +48,9 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
   minimumLicenseRequired: 'basic',
   producer: 'security-solution',
   async executor({
-    services: { alertWithPersistence, logger, scopedRuleRegistryClient },
+    services: { alertWithPersistence, scopedClusterClient },
     params: { query },
   }) {
-    if (!scopedRuleRegistryClient) {
-      return {};
-    }
-
     const indexPattern: IIndexPattern = {
       fields: [],
       title: '*',
@@ -63,9 +59,8 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
     const esQuery = buildEsQuery(indexPattern, { query, language: 'kuery' }, []);
     // TODO: fix query typing below, support all bool params
 
-    console.log(JSON.stringify(esQuery));
-
-    const { events } = await scopedRuleRegistryClient.search({
+    const { events } = await scopedClusterClient.asInternalUser.search({
+      index: ['*'],
       body: {
         query: {
           bool: {
