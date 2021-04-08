@@ -62,6 +62,9 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
 
     const esQuery = buildEsQuery(indexPattern, { query, language: 'kuery' }, []);
     // TODO: fix query typing below, support all bool params
+
+    console.log(JSON.stringify(esQuery));
+
     const { events } = await scopedRuleRegistryClient.search({
       body: {
         query: {
@@ -75,6 +78,9 @@ export const referenceRulePersistenceAlertType = createSecurityPersistenceRuleTy
         },
       },
     });
+
+    console.log('EVENTS');
+    console.log(JSON.stringify(events));
 
     // TODO: filter event fields
     alertWithPersistence(

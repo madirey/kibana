@@ -98,6 +98,8 @@ export function createScopedRuleRegistryClient<TFieldMap extends DefaultFieldMap
         namespace,
       });
 
+      console.log(JSON.stringify(searchRequest));
+
       const response = await scopedClusterClient.asInternalUser.search({
         ...searchRequest,
         index,
