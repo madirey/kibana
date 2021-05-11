@@ -664,7 +664,7 @@ export const createSearchAfterReturnType = ({
   bulkCreateTimes?: string[] | undefined;
   lastLookBackDate?: Date | undefined;
   createdSignalsCount?: number | undefined;
-  createdSignals?: SignalHit[] | undefined;
+  createdSignals?: unknown[] | undefined;
   errors?: string[] | undefined;
 } = {}): SearchAfterAndBulkCreateReturnType => {
   return {
