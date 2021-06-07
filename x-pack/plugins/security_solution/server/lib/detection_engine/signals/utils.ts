@@ -52,7 +52,6 @@ import {
   ThreatRuleParams,
   ThresholdRuleParams,
 } from '../schemas/rule_schemas';
-import { ESClient } from '../../../../../apm/target/types/scripts/shared/get_es_client';
 
 interface SortExceptionsReturn {
   exceptionsWithValueLists: ExceptionListItemSchema[];
@@ -665,9 +664,11 @@ export const createSearchAfterReturnType = ({
   createdSignalsCount,
   createdSignals,
   errors,
+  warningMessages,
 }: {
   success?: boolean | undefined;
   warning?: boolean;
+  warningMessages?: string[] | undefined;
   searchAfterTimes?: string[] | undefined;
   bulkCreateTimes?: string[] | undefined;
   lastLookBackDate?: Date | undefined;
@@ -684,6 +685,7 @@ export const createSearchAfterReturnType = ({
     createdSignalsCount: createdSignalsCount ?? 0,
     createdSignals: createdSignals ?? [],
     errors: errors ?? [],
+    warningMessages: warningMessages ?? [],
   };
 };
 
@@ -719,7 +721,8 @@ export const mergeReturns = (
       createdSignalsCount: existingCreatedSignalsCount,
       createdSignals: existingCreatedSignals,
       errors: existingErrors,
-    } = prev;
+      warningMessages: existingWarningMessages,
+    }: SearchAfterAndBulkCreateReturnType = prev;
 
     const {
       success: newSuccess,
@@ -730,7 +733,8 @@ export const mergeReturns = (
       createdSignalsCount: newCreatedSignalsCount,
       createdSignals: newCreatedSignals,
       errors: newErrors,
-    } = next;
+      warningMessages: newWarningMessages,
+    }: SearchAfterAndBulkCreateReturnType = next;
 
     return {
       success: existingSuccess && newSuccess,
@@ -741,6 +745,7 @@ export const mergeReturns = (
       createdSignalsCount: existingCreatedSignalsCount + newCreatedSignalsCount,
       createdSignals: [...existingCreatedSignals, ...newCreatedSignals],
       errors: [...new Set([...existingErrors, ...newErrors])],
+      warningMessages: [...existingWarningMessages, ...newWarningMessages],
     };
   });
 };
